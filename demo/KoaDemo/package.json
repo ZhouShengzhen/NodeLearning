@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "koa": "^2.13.4",
+    "koa-bodyparser": "^4.3.0",
+    "koa-json-error": "^3.1.2",
+    "koa-parameter": "^3.0.1",
+    "koa-router": "^10.1.1",
+    "koa2": "^2.0.0-alpha.7",
+    "koa2-router": "^2.0.1"
+  }
+}
