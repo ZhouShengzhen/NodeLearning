@@ -1,3 +1,5 @@
+
+
 ### MongoDB(note1)
 
 #### NoSQL简介
@@ -26,3 +28,12 @@
   * 大规模数据存储（可拓展性）
   * 安全可靠（本地复制、自动故障转移）
   * 方便存储复杂数据结构（Schema Free）
+
+#### 安装与简单配置
+
+> [操作博客](https://blog.csdn.net/weixin_42354407/article/details/123586426)
+
+* 安装直接下就好了
+* 配置需要按照博客操作即可
+* 几个常用命令介绍：
+  * 开启服务：`mongod -f /usr/local/mongodb/etc/mongo.conf `
