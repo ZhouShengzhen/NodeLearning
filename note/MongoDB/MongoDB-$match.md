@@ -83,6 +83,8 @@ db.tablename
 
 > 有些时候我们使用管道聚合的时候，会导致想要的数据居合道子元素中，一直使用子元素对比颇费时间，直接展开。
 
+##### 简单示例
+
 - 原数据
 
 ```Shell
@@ -102,3 +104,84 @@ db.inventory.insertOne({ "_id" : 1, "item" : "ABC1", sizes: [ "S", "M", "L"] })
 ```Shell
 db.inventory.aggregate( [ { $unwind : "$sizes" } ] )
 ```
+
+##### 拆分数组字段是 null 或者[]数据
+
+- 原数据
+
+```Shell
+db.inventory2.insertMany([
+  { "_id" : 1, "item" : "ABC", price: NumberDecimal("80"), "sizes": [ "S", "M", "L"] },
+  { "_id" : 2, "item" : "EFG", price: NumberDecimal("120"), "sizes" : [ ] },
+  { "_id" : 3, "item" : "IJK", price: NumberDecimal("160"), "sizes": "M" },
+  { "_id" : 4, "item" : "LMN" , price: NumberDecimal("10") },
+  { "_id" : 5, "item" : "XYZ", price: NumberDecimal("5.75"), "sizes" : null }
+])
+```
+
+- 目标
+
+```Shell
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "S" }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "M" }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "L" }
+{ "_id" : 3, "item" : "IJK", "price" : NumberDecimal("160"), "sizes" : "M" }
+```
+
+- 处理方法
+  > 下面的$unwind操作是等效的，并为size字段中的每个元素返回一个文档。如果size字段没有解析为数组，但没有丢失、null或空数组，则$unwind 将非数组操作数视为单个元素数组。
+
+```Shell
+db.inventory2.aggregate( [ { $unwind: "$sizes" } ] )
+db.inventory2.aggregate( [ { $unwind: { path: "$sizes" } } ] )
+```
+
+- 目标
+  > 下面的`$unwind`操作使用`includeArrayIndex`选项在输出中包含数组索引。
+
+```Json
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "S", "arrayIndex" : NumberLong(0) }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "M", "arrayIndex" : NumberLong(1) }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "L", "arrayIndex" : NumberLong(2) }
+{ "_id" : 3, "item" : "IJK", "price" : NumberDecimal("160"), "sizes" : "M", "arrayIndex" : null }
+```
+
+- 处理方法
+
+```Shell
+db.inventory2.aggregate([
+  {
+    $unwind:
+      {
+        path: "$sizes",
+        includeArrayIndex: "arrayIndex"
+      }
+   }
+])
+```
+
+- 目标
+
+  > 下面的`$unwind`操作使用`preserveNullAndEmptyArrays`选项来包含`size`字段为`null`、缺失或空数组的文档。
+
+```JSON
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "S" }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "M" }
+{ "_id" : 1, "item" : "ABC", "price" : NumberDecimal("80"), "sizes" : "L" }
+{ "_id" : 2, "item" : "EFG", "price" : NumberDecimal("120") }
+{ "_id" : 3, "item" : "IJK", "price" : NumberDecimal("160"), "sizes" : "M" }
+{ "_id" : 4, "item" : "LMN", "price" : NumberDecimal("10") }
+{ "_id" : 5, "item" : "XYZ", "price" : NumberDecimal("5.75"), "sizes" : null }
+```
+
+- 处理方法
+
+```Shell
+db.inventory2.aggregate( [
+   { $unwind: { path: "$sizes", preserveNullAndEmptyArrays: true } }
+] )
+```
+
+#### 参考文献
+
+- [mongodb Aggregation 聚合操作之$unwind](https://www.jianshu.com/p/fdead12f7de3)
