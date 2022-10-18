@@ -1,4 +1,0 @@
-### MongoDB ObjectID() 的转化
-
-- 在SHELL中可以使用 `.str` 来获取 `String` 类型的数据。
-- 在Node中要使用 `.toHexString()` 来获取 `String` 类型的数据。
